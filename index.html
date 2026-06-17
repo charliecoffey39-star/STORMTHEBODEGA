@@ -1,1 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>stormthebodega</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitcount+Grid+Single+Ink&display=swap" rel="stylesheet">
 
+<style>
+  :root{
+    --ink:#0b0b10;
+    --cyan:#21e6ff;
+    --magenta:#ff2e88;
+    --amber:#ffb01f;
+    --lime:#b6ff3a;
+    --rec:#ff2d3d;
+    --text:#e9e9f2;
+    --line:#3a3a52;
+    --title-font: 'Bitcount Grid Single Ink', monospace;
+    --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%; width:100%; background:var(--ink); overflow:hidden;}
+  body { color:var(--text); font-family:var(--mono); position:fixed; inset:0; touch-action:none; }
+
+  #main-title {
+    position: absolute;
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--title-font);
+    font-size: clamp(28px, 6vw, 54px);
+    color: #ffd23a;
+    text-shadow: 0 0 15px rgba(255, 210, 58, 0.7);
+    z-index: 10;
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* ---------- Vaporwave Environmental Grid Background ---------- */
+  #bg{position:absolute;inset:0;z-index:0;overflow:hidden;background:
+      radial-gradient(125% 88% at 50% 50%, #1e46c7 0%, #132fa1 30%, #0a1b66 60%, #050d33 85%, #020614 100%);}
+  #bg .glow{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;background:
+      radial-gradient(120% 30% at 50% 50%, rgba(150,200,255,.5), rgba(60,120,255,.1) 46%, transparent 72%);}
+  .grid{position:absolute;left:50%;width:320vw;height:60vh;pointer-events:none;
+      background-image:linear-gradient(rgba(126,246,255,.45) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(126,246,255,.45) 1.5px, transparent 1.5px);
+      background-size:7.2vh 7.2vh; opacity:.85;}
+  #grid{bottom:-2vh;transform:translateX(-50%) perspective(52vh) rotateX(77deg);transform-origin:50% 0%;
+      mask-image:linear-gradient(to top,#000 24%,transparent 95%); -webkit-mask-image:linear-gradient(to top,#000 24%,transparent 95%);
+      animation:gridF 6s linear infinite;}
+  #gridtop{top:-2vh;transform:translateX(-50%) perspective(52vh) rotateX(-77deg);transform-origin:50% 100%;
+      mask-image:linear-gradient(to bottom,#000 24%,transparent 95%); -webkit-mask-image:linear-gradient(to bottom,#000 24%,transparent 95%);
+      animation:gridC 6s linear infinite; opacity:.3;}
+  @keyframes gridF{from{background-position:0 0;}to{background-position:0 7.2vh;}}
+  @keyframes gridC{from{background-position:0 0;}to{background-position:0 -7.2vh;}}
+
+  #stage{position:absolute;inset:0;z-index:2;}
+  canvas{display:block;}
+
+  /* ---------- Responsive Viewport Player Framing Layout ---------- */
+  #player-view {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5, 5, 10, 0.6);
+  }
+  #player-view.show { display: flex; }
+
+  .cam-aspect-box {
+    position: relative;
+    width: min(92vw, 840px);
+    aspect-ratio: 16 / 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #cam-graphics-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('20A36E09-5B24-45B4-82E0-E15803D810F7.PNG');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: 7;
+    pointer-events: none;
+  }
+
+  /* Inline video sizing calculations targeted inside your image screen window cutout */
+  #vid {
+    position: absolute;
+    width: 53.6%;
+    height: 59.2%;
+    left: 20%;
+    top: 20.4%;
+    object-fit: cover;
+    z-index: 6;
+    background: #000002; /* Black box placeholder background base layout mapping */
+    border: 1px solid #101018;
+  }
+
+  .nav-link {
+    position:absolute; bottom:30px; font-family:var(--mono); font-size:12px;
+    letter-spacing:.2em; color:rgba(233,233,242,.6); text-decoration:none;
+    background:rgba(15,15,25,.85); padding:12px 24px; border:1px solid var(--line);
+    border-radius:20px; backdrop-filter:blur(10px); z-index:10; cursor:pointer; transition:all .2s;
+  }
+  .nav-link:hover { color:var(--cyan); border-color:var(--cyan); box-shadow:0 0 12px rgba(33,230,255,.4); }
+  #to-contact { right:30px; }
+  #to-home { left:30px; display:none; }
+
+  /* ---------- Page 4: Pure Minimal Blue Space Overlay ---------- */
+  #contact-page {
+    position:absolute; inset:0; z-index:9; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    background: radial-gradient(110% 80% at 50% 50%, #1a3cb3 0%, #0c1c66 50%, #030724 100%);
+  }
+
+  /* ---------- Retro-Stitch Live OSD Overlay Layout ---------- */
+  #osd {
+    position: absolute;
+    width: 53.6%;
+    height: 59.2%;
+    left: 20%;
+    top: 20.4%;
+    z-index: 8;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    font-family: var(--mono);
+    overflow: hidden;
+  }
+  #osd.on { opacity: 1; }
+  #osd .scan{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;opacity:.35;background:repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px);}
+  #osd .vig{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 30px rgba(0,0,0,0.6);}
+  .osd-el{position:absolute;text-shadow:0 0 4px rgba(0,0,0,0.9);letter-spacing:.04em;font-weight:bold;}
+  #osd .tl{top:6%;left:6%;font-size:clamp(10px, 1.8vw, 13px);color:#fff;display:flex;align-items:center;gap:6px;}
+  #osd .recdot{width:8px;height:8px;border-radius:50%;background:var(--rec);}
+  #osd .recdot.pause{background:var(--amber);}
+  #osd .tr{top:6%;right:6%;font-size:clamp(10px, 1.8vw, 12px);color:#fff;}
+  #osd .bl{bottom:7%;left:6%;font-size:clamp(13px, 2.8vw, 20px);color:#fff;}
+  #osd .br{bottom:8%;right:6%;font-size:clamp(8px, 1.5vw, 11px);color:rgba(255,255,255,0.85);}
+
+  /* ---------- Unique Mechanical Retro Deck Controls ---------- */
+  #controls{position:absolute;left:50%;bottom:35px;transform:translateX(-50%) translateY(150%);
+      z-index:9;display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:0px;
+      background:#12121c; border:3px double var(--line);
+      box-shadow:0 10px 30px rgba(0,0,0,0.7); transition:transform .4s cubic-bezier(.16,1,.3,1);}
+  #controls.show{transform:translateX(-50%) translateY(0);}
+  
+  .btn{
+    appearance:none; border:2px solid #2a2a3a; background:#1b1b26; color:var(--text);
+    width:52px; height:46px; border-radius:0px; display:grid; place-items:center;
+    cursor:pointer; position:relative; font-family:var(--mono); font-size:10px; font-weight:900;
+    box-shadow:inset 0 3px 0 rgba(255,255,255,0.1), 0 4px 0 #0d0d14;
+    transition:transform 0.1s, background 0.2s, border-color 0.2s;
+  }
+  .btn:hover{ background:#232332; border-color:var(--cyan); color:#fff; }
+  .btn:active{ transform:translateY(3px); box-shadow:inset 0 1px 0 rgba(0,0,0,0.5), 0 1px 0 #0d0d14; }
+  
+  .btn.danger:hover { border-color:var(--magenta); box-shadow:0 0 10px rgba(255,46,136,0.3); }
+  .btn.play-btn { width:64px; border-color:#445243; }
+  .btn.play-btn:hover { border-color:var(--lime); }
+  
+  #scrub{position:relative;width:clamp(70px,16vw,140px);height:8px;background:#0d0d14;border:1px solid #2a2a3a;cursor:pointer;margin:0 4px;}
+  #scrubfill{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+
+  #fx{position:absolute;inset:0;z-index:4;pointer-events:none;background:repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 1px, transparent 1px 3px);opacity:.4;}
+  #vig{position:absolute;inset:0;z-index:3;pointer-events:none;box-shadow:inset 0 0 150px rgba(0,0,0,.5);}
+</style>
+</head>
+<body>
+
+  <div id="main-title">STORM THE BODEGA</div>
+
+  <div id="bg">
+    <div class="glow"></div>
+    <div id="gridtop" class="grid"></div>
+    <div id="grid" class="grid"></div>
+  </div>
+
+  <div id="stage"></div>
+
+  <div id="player-view">
+    <div class="cam-aspect-box">
+      <video id="vid" crossorigin="anonymous" playsinline webkit-playsinline preload="auto"></video>
+      <div id="cam-graphics-overlay"></div>
+      
+      <div id="osd">
+        <div class="osd-el tl"><span class="recdot" id="osdDot"></span><span id="osdMode">PLAY</span></div>
+        <div class="osd-el tr">SP</div>
+        <div class="osd-el bl" id="osdTC">00:00:00:00</div>
+        <div class="osd-el br" id="osdTapeTitle">COEXISTENCE</div>
+        <div class="scan"></div><div class="vig"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-link" id="to-contact">CONTACT</div>
+  <div class="nav-link" id="to-home">BACK</div>
+
+  <div id="contact-page"></div>
+
+  <div id="controls">
+    <button class="btn danger" id="cEject" title="Eject Tape">EJECT</button>
+    <button class="btn" id="cRew" title="Rewind">REW</button>
+    <button class="btn play-btn" id="cPlay" title="Play / Pause">PLAY</button>
+    <button class="btn" id="cFf" title="Fast Forward">FF</button>
+    <div id="scrub"><div id="scrubfill"></div></div>
+    <button class="btn" id="cDl" title="Download">SAVE</button>
+  </div>
+
+  <div id="fx"></div>
+  <div id="vig"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  
+  <script>
+  const TAPES = [
+    { title:"COEXISTENCE", src:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" },
+    { title:"FOUND FOOTAGE", src:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" },
+    { title:"B-ROLL TAPE", src:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+    { title:"STREET ARCHIVES", src:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4" }
+  ];
+
+  let scene, camera, renderer, camGroup, tapeStackGroup;
+  let camObject = null;
+  let state = 'page1'; 
+  let spin = true, dragging = false, lastX = 0, rotY = 0;
+  let hoverTarget = null, targetScale = 1.0, currentScale = 1.0;
+
+  const stage = document.getElementById('stage');
+  const vid = document.getElementById('vid');
+  const playerView = document.getElementById('player-view');
+
+  function init() {
+    scene = new THREE.Scene();
+    
+    // Extracted deep perspective FOV to force massive desktop presentation scale maps
+    camera = new THREE.PerspectiveCamera(23, stage.clientWidth / stage.clientHeight, 0.1, 100);
+    camera.position.set(0, 0.1, 5.0); 
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    stage.appendChild(renderer.domElement);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
+    keyLight.position.set(4, 8, 4);
+    scene.add(keyLight);
+
+    camGroup = new THREE.Group();
+    scene.add(camGroup);
+
+    tapeStackGroup = new THREE.Group();
+    scene.add(tapeStackGroup);
+
+    const loader = new THREE.GLTFLoader();
+
+    // 1. Camcorder asset pipeline parsing
+    loader.load('sonyccdtrv408e.glb', (gltf) => {
+      camObject = gltf.scene;
+      const box = new THREE.Box3().setFromObject(camObject);
+      const center = box.getCenter(new THREE.Vector3());
+      camObject.position.sub(center);
+      camGroup.scale.setScalar(4.8); 
+      camGroup.add(camObject);
+    }, undefined, (err) => {
+      const geo = new THREE.BoxGeometry(1.65, 1.0, 0.9);
+      const mat = new THREE.MeshStandardMaterial({ color: 0x23242a, metalness: 0.8, roughness: 0.3 });
+      camObject = new THREE.Mesh(geo, mat);
+      camGroup.add(camObject);
+    });
+
+    // 2. Load 3D tape pile stack tracking configuration bounds
+    loader.load('17_6_2026.glb', (gltf) => {
+      const loadedStack = gltf.scene;
+      const box = new THREE.Box3().setFromObject(loadedStack);
+      const center = box.getCenter(new THREE.Vector3());
+      loadedStack.position.sub(center);
+      
+      // Scaled down tape pile dimensions precisely as requested to prevent overlapping elements
+      tapeStackGroup.scale.setScalar(3.2); 
+      tapeStackGroup.add(loadedStack);
+    }, undefined, (err) => {
+      // Procedural fallback mapping
+      for(let i = 0; i < 4; i++) {
+        const tapeNode = new THREE.Group();
+        const shell = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.24, 1.1), new THREE.MeshStandardMaterial({ color: 0x14151a, roughness: 0.65 }));
+        tapeNode.add(shell);
+
+        const sticker = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.16, 0.01), new THREE.MeshStandardMaterial({ color: 0xeaeae6, roughness: 0.9 }));
+        sticker.position.set(0, 0, 0.555);
+        tapeNode.add(sticker);
+
+        const latchColor = (i % 2 === 0) ? 0xff2d3d : 0xb6ff3a;
+        const latch = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.05, 0.25), new THREE.MeshStandardMaterial({ color: latchColor }));
+        latch.position.set(0.65, 0.1, -0.25);
+        tapeNode.add(latch);
+
+        const holeGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 16);
+        const holeMat = new THREE.MeshBasicMaterial({ color: 0x050508 });
+        const hL = new THREE.Mesh(holeGeo, holeMat); hL.rotation.x = Math.PI/2; hL.position.set(-0.35, 0, 0); tapeNode.add(hL);
+        const hR = hL.clone(); hR.position.x = 0.35; tapeNode.add(hR);
+
+        tapeNode.position.y = (i * 0.26) - 0.35;
+        tapeNode.rotation.y = (i * 0.02) - 0.03; // Smooth organic structural offsets
+        tapeNode.userData = { tapeIndex: i };
+        tapeStackGroup.add(tapeNode);
+      }
+      tapeStackGroup.scale.setScalar(1.1);
+    });
+
+    tapeStackGroup.position.set(0, -0.1, 0);
+    tapeStackGroup.visible = false; 
+
+    bindInteractions();
+    window.addEventListener('resize', onResize);
+    loop();
+  }
+
+  function bindInteractions() {
+    stage.addEventListener('pointerdown', e => { dragging = true; spin = false; lastX = e.clientX; });
+    window.addEventListener('pointermove', e => {
+      const mouse = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      if (dragging && state === 'page1') {
+        const deltaX = e.clientX - lastX; lastX = e.clientX;
+        rotY += deltaX * 0.012;
+      }
+
+      if (state === 'page2') {
+        const hits = raycaster.intersectObjects(tapeStackGroup.children, true);
+        if (hits.length > 0) {
+          let rootObject = hits[0].object;
+          while (rootObject.parent && rootObject.parent !== tapeStackGroup) { rootObject = rootObject.parent; }
+          if (hoverTarget !== rootObject) {
+            if (hoverTarget) hoverTarget.scale.set(1, 1, 1);
+            hoverTarget = rootObject;
+          }
+          targetScale = 1.04; 
+          document.body.style.cursor = 'pointer';
+        } else {
+          if (hoverTarget) { hoverTarget.scale.set(1, 1, 1); hoverTarget = null; }
+          targetScale = 1.0;
+          document.body.style.cursor = 'default';
+        }
+      }
+    });
+    
+    window.addEventListener('pointerup', () => { dragging = false; if(state === 'page1') spin = true; });
+
+    stage.addEventListener('click', e => {
+      if (state === 'page3') return;
+      const mouse = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      if (state === 'page1' && camObject) {
+        if (raycaster.intersectObject(camObject, true).length > 0) goToPage2();
+      } else if (state === 'page2') {
+        const hits = raycaster.intersectObjects(tapeStackGroup.children, true);
+        if (hits.length > 0) {
+          let selectedObj = hits[0].object;
+          while (selectedObj.parent && selectedObj.parent !== tapeStackGroup) { selectedObj = selectedObj.parent; }
+          const index = selectedObj.userData.tapeIndex !== undefined ? selectedObj.userData.tapeIndex : Math.floor(Math.random() * TAPES.length);
+          playTape(index);
+        }
+      }
+    });
+
+    document.getElementById('to-contact').addEventListener('click', () => {
+      if(state === 'page4') goToPage1();
+      else goToPage4();
+    });
+
+    document.getElementById('to-home').addEventListener('click', goToPage1);
+
+    document.getElementById('cPlay').addEventListener('click', () => {
+      if(vid.paused) { vid.play(); document.getElementById('osdMode').textContent = 'PLAY'; }
+      else { vid.pause(); document.getElementById('osdMode').textContent = 'PAUSE'; }
+    });
+    document.getElementById('cEject').addEventListener('click', () => {
+      vid.pause();
+      document.getElementById('osd').classList.remove('on');
+      document.getElementById('controls').classList.remove('show');
+      playerView.classList.remove('show');
+      goToPage2();
+    });
+    document.getElementById('cRew').addEventListener('click', () => { vid.currentTime = Math.max(0, vid.currentTime - 5); });
+    document.getElementById('cFf').addEventListener('click', () => { vid.currentTime = Math.min(vid.duration, vid.currentTime + 5); });
+    document.getElementById('cDl').addEventListener('click', () => {
+      const a = document.createElement('a'); a.href = vid.src; a.download = 'capture.mp4'; a.click();
+    });
+  }
+
+  function goToPage1() {
+    state = 'page1'; spin = true;
+    camGroup.visible = true;
+    tapeStackGroup.visible = false;
+    stage.style.display = 'block';
+    playerView.classList.remove('show');
+    document.getElementById('contact-page').style.display = 'none';
+    document.getElementById('to-home').style.display = 'none';
+    document.getElementById('to-contact').textContent = 'CONTACT';
+    camera.position.set(0, 0.1, 5.0);
+    camera.lookAt(0, 0, 0);
+  }
+
+  function goToPage2() {
+    state = 'page2'; spin = false;
+    camGroup.visible = false;
+    tapeStackGroup.visible = true;
+    stage.style.display = 'block';
+    playerView.classList.remove('show');
+    document.getElementById('contact-page').style.display = 'none';
+    document.getElementById('to-home').style.display = 'block';
+    camera.position.set(0, 0.3, 3.8);
+    camera.lookAt(0, -0.1, 0);
+  }
+
+  function goToPage4() {
+    state = 'page4'; spin = false;
+    camGroup.visible = false;
+    tapeStackGroup.visible = false;
+    stage.style.display = 'none';
+    playerView.classList.remove('show');
+    document.getElementById('contact-page').style.display = 'flex';
+    document.getElementById('to-home').style.display = 'none';
+    document.getElementById('to-contact').textContent = 'BACK';
+  }
+
+  function playTape(index) {
+    state = 'page3';
+    stage.style.display = 'none';
+    playerView.classList.add('show');
+    document.getElementById('to-home').style.display = 'none';
+
+    const selection = TAPES[index];
+    vid.src = selection.src;
+    vid.load(); vid.play().catch(() => { vid.muted = true; vid.play(); });
+    
+    document.getElementById('osdTapeTitle').textContent = selection.title;
+    document.getElementById('osd').classList.add('on');
+    document.getElementById('controls').classList.add('show');
+  }
+
+  function formatTC(t) {
+    if(!isFinite(t)) t = 0;
+    const m = Math.floor(t/60).toString().padStart(2,'0');
+    const s = Math.floor(t%60).toString().padStart(2,'0');
+    const f = Math.floor((t%1)*25).toString().padStart(2,'0');
+    return `00:${m}:${s}:${f}`;
+  }
+
+  function onResize() {
+    camera.aspect = stage.clientWidth / stage.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+  }
+
+  function loop() {
+    requestAnimationFrame(loop);
+    const dt = 0.015;
+
+    currentScale += (targetScale - currentScale) * 0.12;
+    if (hoverTarget) {
+      hoverTarget.scale.set(currentScale, currentScale, currentScale);
+    }
+
+    if (state === 'page1') {
+      if (spin) rotY += dt * 0.35;
+      camGroup.rotation.y = rotY;
+      camGroup.rotation.x = Math.sin(Date.now() * 0.001) * 0.04;
+    } else if (state === 'page2') {
+      tapeStackGroup.rotation.y = Math.sin(Date.now() * 0.0003) * 0.08; 
+    } else if (state === 'page3') {
+      document.getElementById('osdTC').textContent = formatTC(vid.currentTime);
+      if(vid.duration) {
+        document.getElementById('scrubfill').style.width = ((vid.currentTime / vid.duration) * 100) + '%';
+      }
+    }
+
+    if (state !== 'page3' && state !== 'page4') {
+      renderer.render(scene, camera);
+    }
+  }
+
+  window.onload = init;
+  </script>
+</body>
+</html>
